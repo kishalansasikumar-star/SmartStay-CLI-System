@@ -59,7 +59,8 @@ public class E245549_Storage {
             for (int i = 0; i < rooms; i++) hotel.addRoom(readRoom(in));
             int guests = in.readInt();
             for (int i = 0; i < guests; i++)
-                hotel.register(new E245549_Guest(in.readUTF(), in.readUTF(), in.readUTF(), in.readUTF()));
+                // Saved registrations can predate the current input rules.
+                hotel.addGuestRecord(new E245549_Guest(in.readUTF(), in.readUTF(), in.readUTF(), in.readUTF()));
             int bookings = in.readInt();
             for (int i = 0; i < bookings; i++) {
                 String id = in.readUTF();

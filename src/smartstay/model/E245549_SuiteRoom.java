@@ -5,9 +5,7 @@ public class E245549_SuiteRoom extends E245549_Room {
         super(id, bed, capacity, status);
     }
 
-    @Override public String type() { return "Suite"; }
-    @Override public int dailyRate() { return 14000; }
-    @Override public int extraGuestRate() { return 2000; }
-    @Override public int taxPercent() { return 15; }
-    @Override public boolean includesBreakfast() { return true; }
+    @Override protected E245549_RoomPackage roomPackage() {
+        return E245549_RoomPackage.SUITE;
+    }
 }

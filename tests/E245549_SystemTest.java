@@ -37,8 +37,17 @@ public class E245549_SystemTest {
         hotel.register(guest);
         check("Guest lookup", hotel.guest("p1") == guest);
         reject("Duplicate passport", () -> hotel.register(guest));
-        reject("Invalid email", () -> new E245549_Guest("P2", "Guest", "1234567", "bad"));
-        reject("Invalid contact", () -> new E245549_Guest("P2", "Guest", "bad", "a@b.co"));
+        reject("Invalid email", () -> hotel.register(new E245549_Guest("P2", "Guest", "1234567", "bad")));
+        reject("Invalid contact", () -> hotel.register(new E245549_Guest("P2", "Guest", "bad", "a@b.co")));
+        reject("Punctuation-only ID", () -> hotel.register(new E245549_Guest("---", "Guest", "1234567", "a@b.co")));
+        reject("Misplaced plus signs", () -> hotel.register(new E245549_Guest("AB123", "Guest", "12++34567", "a@b.co")));
+        reject("Empty email domain label", () -> hotel.register(new E245549_Guest("AB123", "Guest", "1234567", "test@host..com")));
+        E245549_Guest local = new E245549_Guest("912345678V", "N. Perera", "077 123 4567", "n.perera@example.lk");
+        E245549_Guest overseas = new E245549_Guest("AB123", "María O'Neil", "+1 (212) 555-0198", "maria+trip@example.co.uk");
+        hotel.register(local);
+        hotel.register(overseas);
+        check("Local guest registration", hotel.guest(local.document) == local);
+        check("International guest registration", hotel.guest(overseas.document) == overseas);
         String[] types = {"Standard", "Deluxe", "Suite", "Family Suite"};
         int[] rates = {6000, 9000, 14000, 18000}, extras = {1000, 1500, 2000, 2500}, taxes = {10, 12, 15, 15};
         for (int i = 0; i < types.length; i++) {

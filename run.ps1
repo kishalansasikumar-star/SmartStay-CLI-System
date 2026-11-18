@@ -1,7 +1,9 @@
 param([string]$Jdk = $env:JAVA_HOME, [switch]$Test)
 $ErrorActionPreference = 'Stop'
 Push-Location $PSScriptRoot
+$previousEncoding = [Console]::OutputEncoding
 try {
+    [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
     New-Item -ItemType Directory -Force build | Out-Null
     $sources = @(Get-ChildItem src -Filter *.java -Recurse | ForEach-Object FullName)
     $compiler = if ($Jdk) { Join-Path $Jdk 'bin/javac.exe' } else { 'javac' }
@@ -13,5 +15,6 @@ try {
     else { & $runtime -cp build smartstay.ui.E245549_Main }
     exit $LASTEXITCODE
 } finally {
+    [Console]::OutputEncoding = $previousEncoding
     Pop-Location
 }

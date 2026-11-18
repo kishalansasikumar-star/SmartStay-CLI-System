@@ -16,6 +16,11 @@ public class E245549_Hotel {
     private String key(String value) { return value.trim().toUpperCase(Locale.ROOT); }
 
     public void register(E245549_Guest guest) {
+        guest.validateForRegistration();
+        addGuestRecord(guest);
+    }
+
+    void addGuestRecord(E245549_Guest guest) {
         if (guests.putIfAbsent(key(guest.document), guest) != null)
             throw new IllegalArgumentException("NIC/passport already registered.");
     }
@@ -59,6 +64,11 @@ public class E245549_Hotel {
     public void changeStatus(String id, E245549_Room.Status status) {
         requireEditableRoom(id);
         room(id).setStatus(status);
+    }
+
+    public void checkBookingNotice(LocalDate start) {
+        if (start.isBefore(LocalDate.now(clock).plusDays(2)))
+            throw new IllegalArgumentException("Book at least two calendar days before check-in.");
     }
 
     private void checkDates(LocalDate start, LocalDate end) {
@@ -117,8 +127,7 @@ public class E245549_Hotel {
         checkDates(start, end);
         E245549_Reservation original = bookings.get(id);
         boolean newArrival = original == null || !start.equals(original.arrival);
-        if (newArrival && start.isBefore(LocalDate.now(clock).plusDays(2)))
-            throw new IllegalArgumentException("Book at least two calendar days before check-in.");
+        if (newArrival) checkBookingNotice(start);
         if (count <= 0) throw new IllegalArgumentException("Guest count must be positive.");
         E245549_Room room = room(roomId);
         if (statusFor(room, start, end, id) != E245549_Room.Status.Available)

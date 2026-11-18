@@ -46,4 +46,4 @@ Run the repeatable checks with:
 .\run.ps1 -Jdk 'C:\Program Files\Java\jdk-25' -Test
 ```
 
-The test runner uses a fixed hotel clock and temporary files. Its 35 checks cover guest validation, packages, room management, availability, reservations, searches, date boundaries, discounts, refunds and saving/reloading. Each check prints its result. A separate CLI walkthrough was run with a Standard room, capacity 2, three guests and five nights: base 30,000, extra 1,000, discount 3,600, tax 2,740 and final payable 20,140 after advance. Booking, invoice, modification and cancellation were exercised through the menus.
+The test runner uses a fixed hotel clock and temporary files. Its 40 checks cover guest validation, packages, room management, availability, reservations, searches, date boundaries, discounts, refunds and saving/reloading. Each check prints its result. A separate CLI walkthrough was run with a Standard room, capacity 2, three guests and five nights: base 30,000, extra 1,000, discount 3,600, tax 2,740 and final payable 20,140 after advance. Booking, invoice, modification and cancellation were exercised through the menus.

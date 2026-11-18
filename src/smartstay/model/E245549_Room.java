@@ -20,11 +20,12 @@ public abstract class E245549_Room {
 
     public Status status() { return status; }
     public void setStatus(Status status) { this.status = status; }
-    public abstract String type();
-    public abstract int dailyRate();
-    public abstract int extraGuestRate();
-    public abstract int taxPercent();
-    public abstract boolean includesBreakfast();
+    protected abstract E245549_RoomPackage roomPackage();
+    public String type() { return roomPackage().label; }
+    public int dailyRate() { return roomPackage().dailyRate; }
+    public int extraGuestRate() { return roomPackage().extraGuestRate; }
+    public int taxPercent() { return roomPackage().taxPercent; }
+    public boolean includesBreakfast() { return roomPackage().breakfast; }
 
     public static E245549_Room create(String type, String id, Bed bed, int capacity, Status status) {
         switch (type) {

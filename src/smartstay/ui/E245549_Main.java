@@ -12,7 +12,6 @@ public class E245549_Main {
     private final Scanner input = new Scanner(System.in);
     private final Path file;
     private final E245549_Hotel hotel;
-    private static final String[] TYPES = {"Standard", "Deluxe", "Suite", "Family Suite"};
 
     private E245549_Main(Path file) throws IOException {
         this.file = file;
@@ -20,6 +19,7 @@ public class E245549_Main {
     }
 
     public static void main(String[] args) {
+        System.setOut(new PrintStream(System.out, true, java.nio.charset.StandardCharsets.UTF_8));
         try {
             new E245549_Main(Path.of("data", "hotel.dat")).run();
         } catch (NoSuchElementException e) {
@@ -33,7 +33,7 @@ public class E245549_Main {
     private String ask(String label) {
         System.out.print(label + ": ");
         String value = input.nextLine().trim();
-        if (value.isEmpty()) throw new IllegalArgumentException("A value is required.");
+        if (value.isEmpty()) throw new IllegalArgumentException(label + " is required.");
         return value;
     }
 
@@ -47,12 +47,39 @@ public class E245549_Main {
         catch (DateTimeParseException e) { throw new IllegalArgumentException("Enter a valid date as YYYY-MM-DD."); }
     }
 
+    private void box(String title, String... rows) {
+        int width = title.length();
+        for (String row : rows) width = Math.max(width, row.length());
+        String border = "─".repeat(width + 2);
+        System.out.println("┌" + border + "┐");
+        System.out.printf("│ %-" + width + "s │%n", title);
+        if (rows.length > 0) System.out.println("├" + border + "┤");
+        for (String row : rows) System.out.printf("│ %-" + width + "s │%n", row);
+        System.out.println("└" + border + "┘");
+    }
+
     private String choose(String label, String... choices) {
-        System.out.println(label);
-        for (int i = 0; i < choices.length; i++) System.out.printf("  %d. %s%n", i + 1, choices[i]);
+        String[] rows = new String[choices.length];
+        for (int i = 0; i < choices.length; i++) rows[i] = String.format(Locale.ROOT, "[%02d] %s", i + 1, choices[i]);
+        box(label, rows);
         int choice = number("Select");
         if (choice < 1 || choice > choices.length) throw new IllegalArgumentException("Choose a listed option.");
         return choices[choice - 1];
+    }
+
+    private String chooseRoomPackage() {
+        E245549_RoomPackage[] packages = E245549_RoomPackage.values();
+        String[] rows = new String[packages.length + 1];
+        rows[0] = "     Room type      LKR/night   Free breakfast   LKR/extra guest   Tax";
+        for (int i = 0; i < packages.length; i++) {
+            E245549_RoomPackage p = packages[i];
+            rows[i + 1] = String.format(Locale.US, "[%02d] %-13s %,9d   %-14s %,15d   %2d%%",
+                    i + 1, p.label, p.dailyRate, p.breakfast ? "Yes" : "No", p.extraGuestRate, p.taxPercent);
+        }
+        box("Available Room Packages", rows);
+        int choice = number("Select room package");
+        if (choice < 1 || choice > packages.length) throw new IllegalArgumentException("Choose a listed room package.");
+        return packages[choice - 1].label;
     }
 
     private boolean confirm(String message) {
@@ -65,29 +92,30 @@ public class E245549_Main {
     }
 
     private void run() throws IOException {
-        System.out.println("SmartStay Hotel Booking System");
         String menu = "Main";
         while (true) {
             try {
-                System.out.println("\n" + menu + " menu");
+                System.out.println();
                 switch (menu) {
                     case "Main":
-                        System.out.println("1 Administrator   2 Guest   0 Exit");
+                        box("SmartStay Hotel Booking System", "[01] Administrator", "[02] Guest", "[00] Exit");
                         int role = number("Choice");
                         if (role == 0) return;
                         if (role == 1) menu = "Administrator";
                         else if (role == 2) menu = "Guest";
-                        else System.out.println("Choose 0, 1 or 2.");
+                        else System.out.println("Choose [01], [02] or [00].");
                         break;
                     case "Administrator":
-                        System.out.println("1 Add room   2 Update room   3 Remove room   4 Change status   5 List rooms   0 Back");
+                        box("Administrator menu", "[01] Add room", "[02] Update room", "[03] Remove room",
+                                "[04] Change status", "[05] List rooms", "[00] Back");
                         int adminChoice = number("Choice");
                         if (adminChoice == 0) menu = "Main";
                         else admin(adminChoice);
                         break;
                     case "Guest":
-                        System.out.println("1 Register   2 Find rooms   3 Book   4 Find by booking ID   5 Find by name");
-                        System.out.println("6 View by check-in   7 Modify   8 Cancel   9 Invoice   0 Back");
+                        box("Guest menu", "[01] Register", "[02] Find rooms", "[03] Book a room",
+                                "[04] Find by booking ID", "[05] Find by guest name", "[06] View by check-in",
+                                "[07] Modify reservation", "[08] Cancel reservation", "[09] View invoice", "[00] Back");
                         int guestChoice = number("Choice");
                         if (guestChoice == 0) menu = "Main";
                         else guest(guestChoice);
@@ -110,7 +138,7 @@ public class E245549_Main {
             case 2:
                 String id = ask("Room ID");
                 if (choice == 2) hotel.room(id);
-                String type = choose("Room type", TYPES);
+                String type = chooseRoomPackage();
                 E245549_Room.Bed bed = E245549_Room.Bed.valueOf(choose("Bed", "Single", "Double", "Queen", "King"));
                 E245549_Room room = E245549_Room.create(type, id, bed, number("Guests included in rate"), pickStatus());
                 if (choice == 1) hotel.addRoom(room);
@@ -137,9 +165,10 @@ public class E245549_Main {
     }
 
     private void showRoom(E245549_Room r, E245549_Room.Status status) {
-        System.out.printf("%s | %s | %s bed | LKR %,d/night | %d included | Breakfast: %s | %s%n",
-                r.id, r.type(), r.bed, r.dailyRate(), r.capacity, r.includesBreakfast() ? "yes" : "no",
-                status == E245549_Room.Status.UnderMaintenance ? "Under Maintenance" : status);
+        box("Room " + r.id + "   " + r.type(),
+                r.bed + " bed   |   " + String.format("LKR %,d/night", r.dailyRate()),
+                "Guests included: " + r.capacity + "   |   Breakfast: " + (r.includesBreakfast() ? "yes" : "no"),
+                "Status: " + (status == E245549_Room.Status.UnderMaintenance ? "Under Maintenance" : status));
     }
 
     private List<E245549_Room> available(String type, LocalDate start, LocalDate end) {
@@ -155,11 +184,22 @@ public class E245549_Main {
             document = ask("Registered NIC/passport");
             hotel.guest(document);
         }
-        String type = choose("Room type", TYPES);
+        String type = chooseRoomPackage();
         LocalDate start = date("Check-in");
         LocalDate end = date("Check-out");
         List<E245549_Room> rooms = available(type, start, end);
-        if (!book || rooms.isEmpty()) return;
+        if (rooms.isEmpty()) return;
+        if (!book) {
+            box("Room search", "[01] Book a room from these results", "[00] Back to Guest menu");
+            int choice = number("Choice");
+            if (choice == 0) return;
+            if (choice != 1) throw new IllegalArgumentException("Choose [01] to book or [00] to go back.");
+        }
+        hotel.checkBookingNotice(start);
+        if (!book) {
+            document = ask("Registered NIC/passport");
+            hotel.guest(document);
+        }
         E245549_Room selected = hotel.room(ask("Room ID from results"));
         if (!rooms.contains(selected)) throw new IllegalArgumentException("Choose a room from the results.");
         int count = number("Number of guests");
@@ -217,7 +257,7 @@ public class E245549_Main {
 
     private void invoice(E245549_Reservation b) {
         E245549_Invoice bill = new E245549_Invoice(b, new E245549_LongStayDiscount());
-        System.out.println("\nSmartStay invoice " + b.id + " (LKR)");
+        box("SmartStay invoice " + b.id + " (LKR)");
         System.out.println(b.guest.name + " | " + b.guest.document + " | " + b.guest.phone + " | " + b.guest.email);
         System.out.printf("Room %s | %s | %s bed | Daily rate %,d%n", b.room.id, b.room.type(), b.room.bed, b.room.dailyRate());
         System.out.printf("Check-in %s | Check-out %s | Nights %d | Guests %d%n", b.arrival, b.departure, bill.nights, b.guests);

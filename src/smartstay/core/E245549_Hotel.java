@@ -45,8 +45,8 @@ public class E245549_Hotel {
 
     private void requireEditableRoom(String id) {
         room(id);
-        for (E245549_Reservation b : bookings.values()) {
-            if (b.room.id.equals(key(id)) && !b.cancelled() && b.departure.isAfter(LocalDate.now(clock)))
+        for (E245549_Reservation booking : bookings.values()) {
+            if (booking.room.id.equals(key(id)) && !booking.cancelled() && booking.departure.isAfter(LocalDate.now(clock)))
                 throw new IllegalArgumentException("This room has a current or future booking.");
         }
     }
@@ -77,8 +77,8 @@ public class E245549_Hotel {
 
     public E245549_Room.Status statusFor(E245549_Room room, LocalDate start, LocalDate end, String ignoreId) {
         if (room.status() != E245549_Room.Status.Available) return room.status();
-        for (E245549_Reservation b : bookings.values()) {
-            if (!b.id.equals(ignoreId) && b.room.id.equals(room.id) && b.overlaps(start, end))
+        for (E245549_Reservation booking : bookings.values()) {
+            if (!booking.id.equals(ignoreId) && booking.room.id.equals(room.id) && booking.overlaps(start, end))
                 return E245549_Room.Status.Reserved;
         }
         return E245549_Room.Status.Available;
@@ -107,18 +107,18 @@ public class E245549_Hotel {
 
     public List<E245549_Reservation> byName(String name) {
         List<E245549_Reservation> result = new ArrayList<>();
-        for (E245549_Reservation b : bookings.values()) {
-            if (b.guest.name.equalsIgnoreCase(name.trim())) result.add(b);
+        for (E245549_Reservation booking : bookings.values()) {
+            if (booking.guest.name.equalsIgnoreCase(name.trim())) result.add(booking);
         }
         return result;
     }
 
     public List<E245549_Reservation> byDate(LocalDate date) {
         List<E245549_Reservation> result = new ArrayList<>();
-        for (E245549_Reservation b : bookings.values()) {
-            if (date == null || b.arrival.equals(date)) result.add(b);
+        for (E245549_Reservation booking : bookings.values()) {
+            if (date == null || booking.arrival.equals(date)) result.add(booking);
         }
-        result.sort(Comparator.comparing(b -> b.arrival));
+        result.sort(Comparator.comparing(booking -> booking.arrival));
         return result;
     }
 
@@ -132,9 +132,9 @@ public class E245549_Hotel {
         E245549_Room room = room(roomId);
         if (statusFor(room, start, end, id) != E245549_Room.Status.Available)
             throw new IllegalArgumentException("Room unavailable for these dates.");
-        E245549_Reservation b = new E245549_Reservation(id, guest, room, start, end, count);
-        bookings.put(id, b);
-        return b;
+        E245549_Reservation booking = new E245549_Reservation(id, guest, room, start, end, count);
+        bookings.put(id, booking);
+        return booking;
     }
 
     public E245549_Reservation reserve(String document, String roomId, LocalDate start, LocalDate end, int count) {
@@ -143,16 +143,16 @@ public class E245549_Hotel {
     }
 
     private E245549_Reservation editableBooking(String id) {
-        E245549_Reservation b = booking(id);
-        if (b.cancelled()) throw new IllegalArgumentException("Booking already cancelled.");
-        Instant cutoff = b.arrival.atTime(14, 0).atZone(ZONE).minusHours(24).toInstant();
+        E245549_Reservation booking = booking(id);
+        if (booking.cancelled()) throw new IllegalArgumentException("Booking already cancelled.");
+        Instant cutoff = booking.arrival.atTime(14, 0).atZone(ZONE).minusHours(24).toInstant();
         if (clock.instant().isAfter(cutoff)) throw new IllegalArgumentException("24-hour change deadline has passed.");
-        return b;
+        return booking;
     }
 
     public E245549_Reservation modify(String id, String roomId, LocalDate start, LocalDate end, int count) {
-        E245549_Reservation old = editableBooking(id);
-        return saveBooking(old.id, old.guest, roomId, start, end, count);
+        E245549_Reservation existingBooking = editableBooking(id);
+        return saveBooking(existingBooking.id, existingBooking.guest, roomId, start, end, count);
     }
 
     public void cancel(String id) { editableBooking(id).cancel(); }

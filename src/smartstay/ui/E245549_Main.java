@@ -31,7 +31,7 @@ public class E245549_Main {
     }
 
     private String ask(String label) {
-        System.out.print(label + ": ");
+        System.out.print(label + (label.endsWith("?") ? " " : ": "));
         String value = input.nextLine().trim();
         if (value.isEmpty()) throw new IllegalArgumentException(label + " is required.");
         return value;
@@ -72,9 +72,9 @@ public class E245549_Main {
         String[] rows = new String[packages.length + 1];
         rows[0] = "     Room type      LKR/night   Free breakfast   LKR/extra guest   Tax";
         for (int i = 0; i < packages.length; i++) {
-            E245549_RoomPackage p = packages[i];
+            E245549_RoomPackage roomPackage = packages[i];
             rows[i + 1] = String.format(Locale.US, "[%02d] %-13s %,9d   %-14s %,15d   %2d%%",
-                    i + 1, p.label, p.dailyRate, p.breakfast ? "Yes" : "No", p.extraGuestRate, p.taxPercent);
+                    i + 1, roomPackage.label, roomPackage.dailyRate, roomPackage.breakfast ? "Yes" : "No", roomPackage.extraGuestRate, roomPackage.taxPercent);
         }
         box("Available Room Packages", rows);
         int choice = number("Select room package");
@@ -100,7 +100,10 @@ public class E245549_Main {
                     case "Main":
                         box("SmartStay Hotel Booking System", "[01] Administrator", "[02] Guest", "[00] Exit");
                         int role = number("Choice");
-                        if (role == 0) return;
+                        if (role == 0) {
+                            System.out.println("SmartStay closed successfully.");
+                            return;
+                        }
                         if (role == 1) menu = "Administrator";
                         else if (role == 2) menu = "Guest";
                         else System.out.println("Choose [01], [02] or [00].");
@@ -139,8 +142,8 @@ public class E245549_Main {
                 String id = ask("Room ID");
                 if (choice == 2) hotel.room(id);
                 String type = chooseRoomPackage();
-                E245549_Room.Bed bed = E245549_Room.Bed.valueOf(choose("Bed", "Single", "Double", "Queen", "King"));
-                E245549_Room room = E245549_Room.create(type, id, bed, number("Guests included in rate"), pickStatus());
+                E245549_Room.Bed bed = E245549_Room.Bed.valueOf(choose("Bed Type", "Single", "Double", "Queen", "King"));
+                E245549_Room room = E245549_Room.create(type, id, bed, number("How many guests does the nightly rate cover?"), pickStatus());
                 if (choice == 1) hotel.addRoom(room);
                 else hotel.updateRoom(room);
                 saved("Room saved.");
@@ -158,22 +161,22 @@ public class E245549_Main {
                 break;
             case 5:
                 if (hotel.allRooms().isEmpty()) System.out.println("No rooms yet. Use Add room to start.");
-                for (E245549_Room r : hotel.allRooms()) showRoom(r, hotel.statusToday(r));
+                for (E245549_Room listedRoom : hotel.allRooms()) showRoom(listedRoom, hotel.statusToday(listedRoom));
                 break;
             default: System.out.println("Choose a listed option.");
         }
     }
 
-    private void showRoom(E245549_Room r, E245549_Room.Status status) {
-        box("Room " + r.id + "   " + r.type(),
-                r.bed + " bed   |   " + String.format("LKR %,d/night", r.dailyRate()),
-                "Guests included: " + r.capacity + "   |   Breakfast: " + (r.includesBreakfast() ? "yes" : "no"),
+    private void showRoom(E245549_Room room, E245549_Room.Status status) {
+        box("Room " + room.id + "   " + room.type(),
+                room.bed + " bed   |   " + String.format("LKR %,d/night", room.dailyRate()),
+                "Guests included: " + room.capacity + "   |   Breakfast: " + (room.includesBreakfast() ? "yes" : "no"),
                 "Status: " + (status == E245549_Room.Status.UnderMaintenance ? "Under Maintenance" : status));
     }
 
     private List<E245549_Room> available(String type, LocalDate start, LocalDate end) {
         List<E245549_Room> rooms = hotel.searchRooms(type, start, end);
-        for (E245549_Room r : rooms) showRoom(r, E245549_Room.Status.Available);
+        for (E245549_Room room : rooms) showRoom(room, E245549_Room.Status.Available);
         if (rooms.isEmpty()) System.out.println("No matching rooms for this stay.");
         return rooms;
     }
@@ -200,12 +203,12 @@ public class E245549_Main {
             document = ask("Registered NIC/passport");
             hotel.guest(document);
         }
-        E245549_Room selected = hotel.room(ask("Room ID from results"));
-        if (!rooms.contains(selected)) throw new IllegalArgumentException("Choose a room from the results.");
+        E245549_Room selectedRoom = hotel.room(ask("Room ID from results"));
+        if (!rooms.contains(selectedRoom)) throw new IllegalArgumentException("Choose a room from the results.");
         int count = number("Number of guests");
         if (confirm("Confirm booking with LKR 10,000 refundable advance?")) {
-            E245549_Reservation b = hotel.reserve(document, selected.id, start, end, count);
-            saved("Booked " + b.id + ". Advance recorded: LKR 10,000.");
+            E245549_Reservation booking = hotel.reserve(document, selectedRoom.id, start, end, count);
+            saved("Booked " + booking.id + ". Advance recorded: LKR 10,000.");
         }
     }
 
@@ -221,14 +224,14 @@ public class E245549_Main {
             case 4: show(hotel.booking(ask("Booking ID"))); break;
             case 5: showList(hotel.byName(ask("Full guest name"))); break;
             case 6:
-                boolean all = choose("Check-in view", "One date", "All dates in order").startsWith("All");
-                showList(hotel.byDate(all ? null : date("Check-in")));
+                boolean showAllDates = choose("Check-in view", "One date", "All dates in order").startsWith("All");
+                showList(hotel.byDate(showAllDates ? null : date("Check-in")));
                 break;
             case 7:
-                E245549_Reservation old = hotel.booking(ask("Booking ID"));
-                show(old);
+                E245549_Reservation existingBooking = hotel.booking(ask("Booking ID"));
+                show(existingBooking);
                 String roomId = ask("Room ID for updated stay");
-                hotel.modify(old.id, roomId, date("Check-in"), date("Check-out"), number("Number of guests"));
+                hotel.modify(existingBooking.id, roomId, date("Check-in"), date("Check-out"), number("Number of guests"));
                 saved("Reservation updated. Original advance retained.");
                 break;
             case 8:
@@ -244,26 +247,26 @@ public class E245549_Main {
         }
     }
 
-    private void show(E245549_Reservation b) {
+    private void show(E245549_Reservation booking) {
         System.out.printf("%s | %s | Room %s | %s to %s | Guests: %d | %s%n",
-                b.id, b.guest.name, b.room.id, b.arrival, b.departure, b.guests,
-                b.cancelled() ? "Cancelled / advance refunded" : "Confirmed");
+                booking.id, booking.guest.name, booking.room.id, booking.arrival, booking.departure, booking.guests,
+                booking.cancelled() ? "Cancelled / advance refunded" : "Confirmed");
     }
 
     private void showList(List<E245549_Reservation> list) {
         if (list.isEmpty()) System.out.println("No matching reservations.");
-        for (E245549_Reservation b : list) show(b);
+        for (E245549_Reservation booking : list) show(booking);
     }
 
-    private void invoice(E245549_Reservation b) {
-        E245549_Invoice bill = new E245549_Invoice(b, new E245549_LongStayDiscount());
-        box("SmartStay invoice " + b.id + " (LKR)");
-        System.out.println(b.guest.name + " | " + b.guest.document + " | " + b.guest.phone + " | " + b.guest.email);
-        System.out.printf("Room %s | %s | %s bed | Daily rate %,d%n", b.room.id, b.room.type(), b.room.bed, b.room.dailyRate());
-        System.out.printf("Check-in %s | Check-out %s | Nights %d | Guests %d%n", b.arrival, b.departure, bill.nights, b.guests);
+    private void invoice(E245549_Reservation booking) {
+        E245549_Invoice bill = new E245549_Invoice(booking, new E245549_LongStayDiscount());
+        box("SmartStay invoice " + booking.id + " (LKR)");
+        System.out.println(booking.guest.name + " | " + booking.guest.document + " | " + booking.guest.phone + " | " + booking.guest.email);
+        System.out.printf("Room %s | %s | %s bed | Daily rate %,d%n", booking.room.id, booking.room.type(), booking.room.bed, booking.room.dailyRate());
+        System.out.printf("Check-in %s | Check-out %s | Nights %d | Guests %d%n", booking.arrival, booking.departure, bill.nights, booking.guests);
         System.out.printf("Base charge: %,.2f%nExtra guest charges: %,.2f%nDiscount: %,.2f%n", bill.base, bill.extra, bill.discount);
         System.out.printf("Tax (%d%%): %,.2f%nTotal: %,.2f%nAdvance deducted: %,d.00%n",
-                b.room.taxPercent(), bill.tax, bill.total, E245549_Reservation.ADVANCE);
+                booking.room.taxPercent(), bill.tax, bill.total, E245549_Reservation.ADVANCE);
         System.out.printf("Final payable: %,.2f%n", bill.balance.max(java.math.BigDecimal.ZERO));
         if (bill.balance.signum() < 0) System.out.printf("Refund due: %,.2f%n", bill.balance.negate());
     }

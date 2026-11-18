@@ -51,10 +51,10 @@ public class E245549_SystemTest {
         String[] types = {"Standard", "Deluxe", "Suite", "Family Suite"};
         int[] rates = {6000, 9000, 14000, 18000}, extras = {1000, 1500, 2000, 2500}, taxes = {10, 12, 15, 15};
         for (int i = 0; i < types.length; i++) {
-            E245549_Room r = room(types[i], "R" + i);
-            hotel.addRoom(r);
-            check(types[i] + " package", r.dailyRate() == rates[i] && r.extraGuestRate() == extras[i]
-                    && r.taxPercent() == taxes[i] && r.includesBreakfast() == (i > 0));
+            E245549_Room room = room(types[i], "R" + i);
+            hotel.addRoom(room);
+            check(types[i] + " package", room.dailyRate() == rates[i] && room.extraGuestRate() == extras[i]
+                    && room.taxPercent() == taxes[i] && room.includesBreakfast() == (i > 0));
         }
         reject("Duplicate room", () -> hotel.addRoom(room("Suite", "R0")));
         hotel.updateRoom(room("Suite", "R1"));
@@ -63,50 +63,50 @@ public class E245549_SystemTest {
         check("Remove and list rooms", hotel.allRooms().size() == 3);
         LocalDate start = LocalDate.of(2030, 1, 3);
         LocalDate end = start.plusDays(5);
-        for (E245549_Room.Status s : new E245549_Room.Status[]{E245549_Room.Status.Reserved, E245549_Room.Status.UnderMaintenance}) {
-            hotel.changeStatus("R0", s);
-            reject(s + " booking blocked", () -> hotel.reserve("P1", "R0", start, end, 2));
+        for (E245549_Room.Status roomStatus : new E245549_Room.Status[]{E245549_Room.Status.Reserved, E245549_Room.Status.UnderMaintenance}) {
+            hotel.changeStatus("R0", roomStatus);
+            reject(roomStatus + " booking blocked", () -> hotel.reserve("P1", "R0", start, end, 2));
         }
         hotel.changeStatus("R0", E245549_Room.Status.Available);
         reject("One day notice", () -> hotel.reserve("P1", "R0", start.minusDays(1), end, 2));
         reject("Zero nights", () -> hotel.reserve("P1", "R0", start, start, 2));
         reject("Zero guests", () -> hotel.reserve("P1", "R0", start, end, 0));
-        E245549_Reservation b = hotel.reserve("P1", "R0", start, end, 3);
-        check("Two days notice accepted", hotel.booking(b.id) == b);
+        E245549_Reservation booking = hotel.reserve("P1", "R0", start, end, 3);
+        check("Two days notice accepted", hotel.booking(booking.id) == booking);
         reject("Overlap", () -> hotel.reserve("P1", "R0", end.minusDays(1), end.plusDays(1), 2));
         reject("Booked room removal", () -> hotel.removeRoom("R0"));
         check("Date and type search", hotel.searchRooms("Standard", start, end).isEmpty()
                 && hotel.searchRooms("Suite", start, end).size() == 1);
-        E245549_Reservation next = hotel.reserve("P1", "R0", end, end.plusDays(4), 2);
-        check("Checkout day available", !next.id.equals(b.id));
+        E245549_Reservation nextBooking = hotel.reserve("P1", "R0", end, end.plusDays(4), 2);
+        check("Checkout day available", !nextBooking.id.equals(booking.id));
         E245549_LongStayDiscount policy = new E245549_LongStayDiscount();
-        E245549_Invoice bill = new E245549_Invoice(b, policy);
+        E245549_Invoice bill = new E245549_Invoice(booking, policy);
         check("Five nights, one extra guest, base-only discount, tax and advance",
                 amount(bill.base, "30000") && amount(bill.discount, "3600") && amount(bill.extra, "1000")
                         && amount(bill.tax, "2740") && amount(bill.balance, "20140"));
-        E245549_Invoice shortBill = new E245549_Invoice(next, policy);
+        E245549_Invoice shortBill = new E245549_Invoice(nextBooking, policy);
         check("Four nights at capacity", amount(shortBill.discount, "0") && amount(shortBill.extra, "0"));
         check("Guest name and ID searches", hotel.byName("test guest").size() == 2 && hotel.byName("missing").isEmpty());
         reject("Unknown booking ID", () -> hotel.booking("X"));
-        check("Filter and sort by check-in", hotel.byDate(end).size() == 1 && hotel.byDate(null).get(0) == b);
-        reject("Conflicting modification", () -> hotel.modify(b.id, "R0", start, end.plusDays(1), 2));
-        check("Failed edit keeps original", hotel.booking(b.id) == b);
+        check("Filter and sort by check-in", hotel.byDate(end).size() == 1 && hotel.byDate(null).get(0) == booking);
+        reject("Conflicting modification", () -> hotel.modify(booking.id, "R0", start, end.plusDays(1), 2));
+        check("Failed edit keeps original", hotel.booking(booking.id) == booking);
         Path dir = Files.createTempDirectory("smartstay-test");
         Path file = dir.resolve("hotel.dat");
         try {
             E245549_Storage.save(file, hotel);
             E245549_Hotel boundary = E245549_Storage.load(file, at("2030-01-02T14:00"));
-            check("Saved invoice after restart", amount(new E245549_Invoice(boundary.booking(b.id), policy).balance, "20140"));
-            boundary.modify(b.id, "R0", start, start.plusDays(1), 2);
-            check("Exactly 24 hours: edit and single advance", amount(new E245549_Invoice(boundary.booking(b.id), policy).balance, "-3400"));
-            boundary.cancel(b.id);
+            check("Saved invoice after restart", amount(new E245549_Invoice(boundary.booking(booking.id), policy).balance, "20140"));
+            boundary.modify(booking.id, "R0", start, start.plusDays(1), 2);
+            check("Exactly 24 hours: edit and single advance", amount(new E245549_Invoice(boundary.booking(booking.id), policy).balance, "-3400"));
+            boundary.cancel(booking.id);
             check("Exactly 24 hours: cancellation frees dates", boundary.searchRooms("Standard", start, end).size() == 1);
-            reject("Repeated refund prevented", () -> boundary.cancel(b.id));
+            reject("Repeated refund prevented", () -> boundary.cancel(booking.id));
             E245549_Hotel late = E245549_Storage.load(file, at("2030-01-02T14:01"));
-            reject("Inside 24 hours: no cancellation", () -> late.cancel(b.id));
-            reject("Inside 24 hours: no edit", () -> late.modify(b.id, "R0", start, end, 1));
+            reject("Inside 24 hours: no cancellation", () -> late.cancel(booking.id));
+            reject("Inside 24 hours: no edit", () -> late.modify(booking.id, "R0", start, end, 1));
             E245549_Storage.save(file, boundary);
-            check("Refund status after restart", E245549_Storage.load(file, clock).booking(b.id).cancelled());
+            check("Refund status after restart", E245549_Storage.load(file, clock).booking(booking.id).cancelled());
         } finally {
             Files.deleteIfExists(file);
             Files.deleteIfExists(dir);

@@ -9,12 +9,12 @@ import java.time.*;
 public class E245549_Storage {
     private static final String FORMAT = "SmartStay-1";
 
-    private static void writeRoom(DataOutputStream out, E245549_Room r) throws IOException {
-        out.writeUTF(r.type());
-        out.writeUTF(r.id);
-        out.writeUTF(r.bed.name());
-        out.writeInt(r.capacity);
-        out.writeUTF(r.status().name());
+    private static void writeRoom(DataOutputStream out, E245549_Room room) throws IOException {
+        out.writeUTF(room.type());
+        out.writeUTF(room.id);
+        out.writeUTF(room.bed.name());
+        out.writeInt(room.capacity);
+        out.writeUTF(room.status().name());
     }
 
     private static E245549_Room readRoom(DataInputStream in) throws IOException {
@@ -30,21 +30,21 @@ public class E245549_Storage {
             out.writeInt(hotel.rooms.size());
             for (E245549_Room room : hotel.rooms.values()) writeRoom(out, room);
             out.writeInt(hotel.guests.size());
-            for (E245549_Guest g : hotel.guests.values()) {
-                out.writeUTF(g.document);
-                out.writeUTF(g.name);
-                out.writeUTF(g.phone);
-                out.writeUTF(g.email);
+            for (E245549_Guest guest : hotel.guests.values()) {
+                out.writeUTF(guest.document);
+                out.writeUTF(guest.name);
+                out.writeUTF(guest.phone);
+                out.writeUTF(guest.email);
             }
             out.writeInt(hotel.bookings.size());
-            for (E245549_Reservation b : hotel.bookings.values()) {
-                out.writeUTF(b.id);
-                out.writeUTF(b.guest.document);
-                writeRoom(out, b.room);
-                out.writeUTF(b.arrival.toString());
-                out.writeUTF(b.departure.toString());
-                out.writeInt(b.guests);
-                out.writeBoolean(b.cancelled());
+            for (E245549_Reservation booking : hotel.bookings.values()) {
+                out.writeUTF(booking.id);
+                out.writeUTF(booking.guest.document);
+                writeRoom(out, booking.room);
+                out.writeUTF(booking.arrival.toString());
+                out.writeUTF(booking.departure.toString());
+                out.writeInt(booking.guests);
+                out.writeBoolean(booking.cancelled());
             }
         }
         Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
@@ -65,10 +65,10 @@ public class E245549_Storage {
             for (int i = 0; i < bookings; i++) {
                 String id = in.readUTF();
                 E245549_Guest guest = hotel.guest(in.readUTF());
-                E245549_Reservation b = new E245549_Reservation(id, guest, readRoom(in),
+                E245549_Reservation booking = new E245549_Reservation(id, guest, readRoom(in),
                         LocalDate.parse(in.readUTF()), LocalDate.parse(in.readUTF()), in.readInt());
-                if (in.readBoolean()) b.cancel();
-                hotel.bookings.put(id, b);
+                if (in.readBoolean()) booking.cancel();
+                hotel.bookings.put(id, booking);
             }
         }
         return hotel;

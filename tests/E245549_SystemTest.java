@@ -82,8 +82,8 @@ public class E245549_SystemTest {
         E245549_LongStayDiscount policy = new E245549_LongStayDiscount();
         E245549_Invoice bill = new E245549_Invoice(booking, policy);
         check("Five nights, one extra guest, base-only discount, tax and advance",
-                amount(bill.base, "30000") && amount(bill.discount, "3600") && amount(bill.extra, "1000")
-                        && amount(bill.tax, "2740") && amount(bill.balance, "20140"));
+                amount(bill.base, "30000") && amount(bill.discount, "3600") && amount(bill.extra, "5000")
+                        && amount(bill.tax, "3140") && amount(bill.balance, "24540"));
         E245549_Invoice shortBill = new E245549_Invoice(nextBooking, policy);
         check("Four nights at capacity", amount(shortBill.discount, "0") && amount(shortBill.extra, "0"));
         check("Guest name and ID searches", hotel.byName("test guest").size() == 2 && hotel.byName("missing").isEmpty());
@@ -96,7 +96,7 @@ public class E245549_SystemTest {
         try {
             E245549_Storage.save(file, hotel);
             E245549_Hotel boundary = E245549_Storage.load(file, at("2030-01-02T14:00"));
-            check("Saved invoice after restart", amount(new E245549_Invoice(boundary.booking(booking.id), policy).balance, "20140"));
+            check("Saved invoice after restart", amount(new E245549_Invoice(boundary.booking(booking.id), policy).balance, "24540"));
             boundary.modify(booking.id, "R0", start, start.plusDays(1), 2);
             check("Exactly 24 hours: edit and single advance", amount(new E245549_Invoice(boundary.booking(booking.id), policy).balance, "-3400"));
             boundary.cancel(booking.id);
@@ -107,6 +107,21 @@ public class E245549_SystemTest {
             reject("Inside 24 hours: no edit", () -> late.modify(booking.id, "R0", start, end, 1));
             E245549_Storage.save(file, boundary);
             check("Refund status after restart", E245549_Storage.load(file, clock).booking(booking.id).cancelled());
+            E245549_Hotel timed = new E245549_Hotel(clock);
+            timed.register(guest);
+            timed.addRoom(room("Standard", "T1"));
+            E245549_Reservation timedBooking = timed.reserve("P1", "T1", start, end, 2, LocalTime.of(15, 30));
+            E245549_Storage.save(file, timed);
+            E245549_Hotel atDeadline = E245549_Storage.load(file, at("2030-01-02T15:30"));
+            check("Custom check-in time survives restart", atDeadline.booking(timedBooking.id).checkInTime.equals(LocalTime.of(15, 30)));
+            atDeadline.modify(timedBooking.id, "T1", start, end, 2, LocalTime.of(16, 0));
+            check("Time modification at original deadline", atDeadline.booking(timedBooking.id).checkInTime.equals(LocalTime.of(16, 0)));
+            E245549_Hotel cancelAtDeadline = E245549_Storage.load(file, at("2030-01-02T15:30"));
+            cancelAtDeadline.cancel(timedBooking.id);
+            check("Custom time cancellation exactly 24 hours", cancelAtDeadline.booking(timedBooking.id).cancelled());
+            E245549_Hotel afterDeadline = E245549_Storage.load(file, at("2030-01-02T15:31"));
+            reject("Custom time cancellation inside 24 hours", () -> afterDeadline.cancel(timedBooking.id));
+            reject("Custom time edit inside 24 hours", () -> afterDeadline.modify(timedBooking.id, "T1", start, end, 2, LocalTime.of(17, 0)));
         } finally {
             Files.deleteIfExists(file);
             Files.deleteIfExists(dir);

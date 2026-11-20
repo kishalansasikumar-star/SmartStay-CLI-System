@@ -14,7 +14,8 @@ public class E245549_Invoice {
         nights = ChronoUnit.DAYS.between(booking.arrival, booking.departure);
         base = BigDecimal.valueOf(room.dailyRate()).multiply(BigDecimal.valueOf(nights));
         int extraGuests = Math.max(0, booking.guests - room.capacity);
-        extra = BigDecimal.valueOf(extraGuests).multiply(BigDecimal.valueOf(room.extraGuestRate()));
+        extra = BigDecimal.valueOf(extraGuests).multiply(BigDecimal.valueOf(room.extraGuestRate()))
+                .multiply(BigDecimal.valueOf(nights));
         discount = policy.discount(nights, base);
         BigDecimal subtotal = base.subtract(discount).add(extra);
         tax = subtotal.multiply(BigDecimal.valueOf(room.taxPercent(), 2)).setScale(2, RoundingMode.HALF_UP);

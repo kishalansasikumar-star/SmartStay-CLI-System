@@ -47,6 +47,16 @@ public class E245549_Main {
         catch (DateTimeParseException e) { throw new IllegalArgumentException("Enter a valid date as YYYY-MM-DD."); }
     }
 
+    private LocalTime checkInTime() {
+        String value = ask("Check-in time (HH:mm, 24-hour Sri Lanka time)");
+        try {
+            if (!value.matches("[0-9]{2}:[0-9]{2}")) throw new DateTimeParseException("Format", value, 0);
+            return LocalTime.parse(value);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Enter a valid check-in time, for example 14:00 or 15:30.");
+        }
+    }
+
     private void box(String title, String... rows) {
         int width = title.length();
         for (String row : rows) width = Math.max(width, row.length());
@@ -77,6 +87,7 @@ public class E245549_Main {
                     i + 1, roomPackage.label, roomPackage.dailyRate, roomPackage.breakfast ? "Yes" : "No", roomPackage.extraGuestRate, roomPackage.taxPercent);
         }
         box("Available Room Packages", rows);
+        System.out.println("Extra guest rates are per person, per night, above the room's included guest count.");
         int choice = number("Select room package");
         if (choice < 1 || choice > packages.length) throw new IllegalArgumentException("Choose a listed room package.");
         return packages[choice - 1].label;
@@ -109,16 +120,16 @@ public class E245549_Main {
                         else System.out.println("Choose [01], [02] or [00].");
                         break;
                     case "Administrator":
-                        box("Administrator menu", "[01] Add room", "[02] Update room", "[03] Remove room",
-                                "[04] Change status", "[05] List rooms", "[00] Back");
+                        box("Administrator menu", "[01] Add Room Record", "[02] Update Room Record", "[03] Remove Room Record",
+                                "[04] Manage Room Availability", "[05] View All Room Records", "[00] Back");
                         int adminChoice = number("Choice");
                         if (adminChoice == 0) menu = "Main";
                         else admin(adminChoice);
                         break;
                     case "Guest":
-                        box("Guest menu", "[01] Register", "[02] Find rooms", "[03] Book a room",
-                                "[04] Find by booking ID", "[05] Find by guest name", "[06] View by check-in",
-                                "[07] Modify reservation", "[08] Cancel reservation", "[09] View invoice", "[00] Back");
+                        box("Guest menu", "[01] Register as Customer", "[02] Search Available Rooms", "[03] Make Reservation",
+                                "[04] Search by Booking ID", "[05] Search by Guest Name", "[06] View Reservations by Check-in Date",
+                                "[07] Modify Reservation", "[08] Cancel Reservation", "[09] View Invoice", "[00] Back");
                         int guestChoice = number("Choice");
                         if (guestChoice == 0) menu = "Main";
                         else guest(guestChoice);
@@ -160,7 +171,7 @@ public class E245549_Main {
                 saved("Status updated.");
                 break;
             case 5:
-                if (hotel.allRooms().isEmpty()) System.out.println("No rooms yet. Use Add room to start.");
+                if (hotel.allRooms().isEmpty()) System.out.println("No rooms yet. Use Add Room Record to start.");
                 for (E245549_Room listedRoom : hotel.allRooms()) showRoom(listedRoom, hotel.statusToday(listedRoom));
                 break;
             default: System.out.println("Choose a listed option.");
@@ -193,7 +204,7 @@ public class E245549_Main {
         List<E245549_Room> rooms = available(type, start, end);
         if (rooms.isEmpty()) return;
         if (!book) {
-            box("Room search", "[01] Book a room from these results", "[00] Back to Guest menu");
+            box("Room search", "[01] Make Reservation from These Results", "[00] Back to Guest menu");
             int choice = number("Choice");
             if (choice == 0) return;
             if (choice != 1) throw new IllegalArgumentException("Choose [01] to book or [00] to go back.");
@@ -205,9 +216,10 @@ public class E245549_Main {
         }
         E245549_Room selectedRoom = hotel.room(ask("Room ID from results"));
         if (!rooms.contains(selectedRoom)) throw new IllegalArgumentException("Choose a room from the results.");
+        LocalTime arrivalTime = checkInTime();
         int count = number("Number of guests");
         if (confirm("Confirm booking with LKR 10,000 refundable advance?")) {
-            E245549_Reservation booking = hotel.reserve(document, selectedRoom.id, start, end, count);
+            E245549_Reservation booking = hotel.reserve(document, selectedRoom.id, start, end, count, arrivalTime);
             saved("Booked " + booking.id + ". Advance recorded: LKR 10,000.");
         }
     }
@@ -231,7 +243,10 @@ public class E245549_Main {
                 E245549_Reservation existingBooking = hotel.booking(ask("Booking ID"));
                 show(existingBooking);
                 String roomId = ask("Room ID for updated stay");
-                hotel.modify(existingBooking.id, roomId, date("Check-in"), date("Check-out"), number("Number of guests"));
+                LocalDate arrival = date("Check-in");
+                LocalDate departure = date("Check-out");
+                LocalTime arrivalTime = checkInTime();
+                hotel.modify(existingBooking.id, roomId, arrival, departure, number("Number of guests"), arrivalTime);
                 saved("Reservation updated. Original advance retained.");
                 break;
             case 8:
@@ -249,7 +264,7 @@ public class E245549_Main {
 
     private void show(E245549_Reservation booking) {
         System.out.printf("%s | %s | Room %s | %s to %s | Guests: %d | %s%n",
-                booking.id, booking.guest.name, booking.room.id, booking.arrival, booking.departure, booking.guests,
+                booking.id, booking.guest.name, booking.room.id, booking.arrival + " " + booking.checkInTime, booking.departure, booking.guests,
                 booking.cancelled() ? "Cancelled / advance refunded" : "Confirmed");
     }
 
@@ -263,7 +278,7 @@ public class E245549_Main {
         box("SmartStay invoice " + booking.id + " (LKR)");
         System.out.println(booking.guest.name + " | " + booking.guest.document + " | " + booking.guest.phone + " | " + booking.guest.email);
         System.out.printf("Room %s | %s | %s bed | Daily rate %,d%n", booking.room.id, booking.room.type(), booking.room.bed, booking.room.dailyRate());
-        System.out.printf("Check-in %s | Check-out %s | Nights %d | Guests %d%n", booking.arrival, booking.departure, bill.nights, booking.guests);
+        System.out.printf("Check-in %s | Check-out %s | Nights %d | Guests %d%n", booking.arrival + " " + booking.checkInTime, booking.departure, bill.nights, booking.guests);
         System.out.printf("Base charge: %,.2f%nExtra guest charges: %,.2f%nDiscount: %,.2f%n", bill.base, bill.extra, bill.discount);
         System.out.printf("Tax (%d%%): %,.2f%nTotal: %,.2f%nAdvance deducted: %,d.00%n",
                 booking.room.taxPercent(), bill.tax, bill.total, E245549_Reservation.ADVANCE);

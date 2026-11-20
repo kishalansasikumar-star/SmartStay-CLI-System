@@ -25,10 +25,10 @@ On another machine, use its JDK folder or run `.\run.ps1` with JAVA_HOME or the 
 | Topic | Behaviour |
 |---|---|
 | Capacity | The administrator enters the number of guests included in each room rate. The brief supplies no capacity figures. |
-| Extra guests | Charge each person above capacity once per stay, using the package's per-guest price. |
+| Extra guests | Charge each person above capacity for every night of the stay, using the package's per-guest price. |
 | Availability | Manual Reserved and Under Maintenance block bookings until cleared. For an otherwise Available room, overlapping active stays make it Reserved for the requested dates. Checkout day can be used for the next arrival. The admin list displays today's status. |
 | Room changes | Current or future confirmed stays block edits, deletion and manual status changes. Historical reservations retain their booked room details. |
-| Dates | Use Sri Lankan calendar dates for two days' notice, and 14:00 local check-in for the 24-hour rule. Changes exactly 24 hours ahead are allowed. Keeping the original arrival date on an edit retains the original notice. |
+| Dates | Use Sri Lankan calendar dates for two days' notice, and the entered check-in time (HH:mm, Sri Lanka time) for the 24-hour rule. Changes exactly 24 hours ahead are allowed. Keeping the original arrival date on an edit retains the original notice. Older saved bookings use 14:00 because they have no recorded check-in time. |
 | Billing | Discount only the base room charge by 12% at five nights or more. Apply package tax to discounted base plus extras, round tax to two decimals, then deduct the paid advance. |
 | Advance | Confirmation records receipt of LKR 10,000. An edit retains it. Eligible cancellation records a full refund once and releases the dates. When the bill is smaller than the advance the invoice shows zero payable and a refund due. |
 
@@ -46,4 +46,4 @@ Run the repeatable checks with:
 .\run.ps1 -Jdk 'C:\Program Files\Java\jdk-25' -Test
 ```
 
-The test runner uses a fixed hotel clock and temporary files. Its 40 checks cover guest validation, packages, room management, availability, reservations, searches, date boundaries, discounts, refunds and saving/reloading. Each check prints its result. A separate CLI walkthrough was run with a Standard room, capacity 2, three guests and five nights: base 30,000, extra 1,000, discount 3,600, tax 2,740 and final payable 20,140 after advance. Booking, invoice, modification and cancellation were exercised through the menus.
+The test runner uses a fixed hotel clock and temporary files. Its 45 checks cover guest validation, packages, room management, availability, reservations, searches, date boundaries, discounts, refunds and saving/reloading. Each check prints its result. A separate CLI walkthrough was run with a Standard room, capacity 2, three guests and five nights: base 30,000, extra 5,000, discount 3,600, tax 3,140 and final payable 24,540 after advance. Booking, invoice, modification and cancellation were exercised through the menus.

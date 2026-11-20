@@ -123,7 +123,7 @@ public class E245549_Hotel {
     }
 
     private E245549_Reservation saveBooking(String id, E245549_Guest guest, String roomId,
-                                            LocalDate start, LocalDate end, int count) {
+                                            LocalDate start, LocalDate end, int count, LocalTime checkInTime) {
         checkDates(start, end);
         E245549_Reservation original = bookings.get(id);
         boolean newArrival = original == null || !start.equals(original.arrival);
@@ -132,27 +132,35 @@ public class E245549_Hotel {
         E245549_Room room = room(roomId);
         if (statusFor(room, start, end, id) != E245549_Room.Status.Available)
             throw new IllegalArgumentException("Room unavailable for these dates.");
-        E245549_Reservation booking = new E245549_Reservation(id, guest, room, start, end, count);
+        E245549_Reservation booking = new E245549_Reservation(id, guest, room, start, end, count, checkInTime);
         bookings.put(id, booking);
         return booking;
     }
 
     public E245549_Reservation reserve(String document, String roomId, LocalDate start, LocalDate end, int count) {
+        return reserve(document, roomId, start, end, count, LocalTime.of(14, 0));
+    }
+
+    public E245549_Reservation reserve(String document, String roomId, LocalDate start, LocalDate end, int count, LocalTime checkInTime) {
         String id = String.format(Locale.ROOT, "B%04d", bookings.size() + 1);
-        return saveBooking(id, guest(document), roomId, start, end, count);
+        return saveBooking(id, guest(document), roomId, start, end, count, checkInTime);
     }
 
     private E245549_Reservation editableBooking(String id) {
         E245549_Reservation booking = booking(id);
         if (booking.cancelled()) throw new IllegalArgumentException("Booking already cancelled.");
-        Instant cutoff = booking.arrival.atTime(14, 0).atZone(ZONE).minusHours(24).toInstant();
+        Instant cutoff = booking.arrival.atTime(booking.checkInTime).atZone(ZONE).minusHours(24).toInstant();
         if (clock.instant().isAfter(cutoff)) throw new IllegalArgumentException("24-hour change deadline has passed.");
         return booking;
     }
 
     public E245549_Reservation modify(String id, String roomId, LocalDate start, LocalDate end, int count) {
+        return modify(id, roomId, start, end, count, booking(id).checkInTime);
+    }
+
+    public E245549_Reservation modify(String id, String roomId, LocalDate start, LocalDate end, int count, LocalTime checkInTime) {
         E245549_Reservation existingBooking = editableBooking(id);
-        return saveBooking(existingBooking.id, existingBooking.guest, roomId, start, end, count);
+        return saveBooking(existingBooking.id, existingBooking.guest, roomId, start, end, count, checkInTime);
     }
 
     public void cancel(String id) { editableBooking(id).cancel(); }

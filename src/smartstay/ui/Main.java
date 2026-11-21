@@ -220,7 +220,7 @@ public class Main {
         int count = number("Number of guests");
         if (confirm("Confirm booking with LKR 10,000 refundable advance?")) {
             Reservation booking = hotel.reserve(document, selectedRoom.id, start, end, count, arrivalTime);
-            saved("Booked " + booking.id + ". Advance recorded: LKR 10,000.");
+            saved("Reservation confirmed. Booking ID: " + booking.id + ". Advance recorded: LKR 10,000.");
         }
     }
 

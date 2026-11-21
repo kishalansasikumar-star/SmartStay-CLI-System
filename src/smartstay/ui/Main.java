@@ -8,20 +8,20 @@ import java.time.*;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
-public class Main_2703142 {
+public class Main {
     private final Scanner input = new Scanner(System.in);
     private final Path file;
-    private final Hotel_2703142 hotel;
+    private final Hotel hotel;
 
-    private Main_2703142(Path file) throws IOException {
+    private Main(Path file) throws IOException {
         this.file = file;
-        hotel = Storage_2703142.load(file, Clock.system(Hotel_2703142.ZONE));
+        hotel = Storage.load(file, Clock.system(Hotel.ZONE));
     }
 
     public static void main(String[] args) {
         System.setOut(new PrintStream(System.out, true, java.nio.charset.StandardCharsets.UTF_8));
         try {
-            new Main_2703142(Path.of("data", "hotel.dat")).run();
+            new Main(Path.of("data", "hotel.dat")).run();
         } catch (NoSuchElementException e) {
             System.out.println("\nInput closed.");
         } catch (IOException e) {
@@ -78,11 +78,11 @@ public class Main_2703142 {
     }
 
     private String chooseRoomPackage() {
-        RoomPackage_2703142[] packages = RoomPackage_2703142.values();
+        RoomPackage[] packages = RoomPackage.values();
         String[] rows = new String[packages.length + 1];
         rows[0] = "     Room type      LKR/night   Free breakfast   LKR/extra guest   Tax";
         for (int i = 0; i < packages.length; i++) {
-            RoomPackage_2703142 roomPackage = packages[i];
+            RoomPackage roomPackage = packages[i];
             rows[i + 1] = String.format(Locale.US, "[%02d] %-13s %,9d   %-14s %,15d   %2d%%",
                     i + 1, roomPackage.label, roomPackage.dailyRate, roomPackage.breakfast ? "Yes" : "No", roomPackage.extraGuestRate, roomPackage.taxPercent);
         }
@@ -98,7 +98,7 @@ public class Main_2703142 {
     }
 
     private void saved(String message) throws IOException {
-        Storage_2703142.save(file, hotel);
+        Storage.save(file, hotel);
         System.out.println(message);
     }
 
@@ -141,9 +141,9 @@ public class Main_2703142 {
         }
     }
 
-    private Room_2703142.Status pickStatus() {
+    private Room.Status pickStatus() {
         String status = choose("Room status", "Available", "Reserved", "Under Maintenance");
-        return Room_2703142.Status.valueOf(status.replace(" ", ""));
+        return Room.Status.valueOf(status.replace(" ", ""));
     }
 
     private void admin(int choice) throws IOException {
@@ -153,8 +153,8 @@ public class Main_2703142 {
                 String id = ask("Room ID");
                 if (choice == 2) hotel.room(id);
                 String type = chooseRoomPackage();
-                Room_2703142.Bed bed = Room_2703142.Bed.valueOf(choose("Bed Type", "Single", "Double", "Queen", "King"));
-                Room_2703142 room = Room_2703142.create(type, id, bed, number("How many guests does the nightly rate cover?"), pickStatus());
+                Room.Bed bed = Room.Bed.valueOf(choose("Bed Type", "Single", "Double", "Queen", "King"));
+                Room room = Room.create(type, id, bed, number("How many guests does the nightly rate cover?"), pickStatus());
                 if (choice == 1) hotel.addRoom(room);
                 else hotel.updateRoom(room);
                 saved("Room saved.");
@@ -172,22 +172,22 @@ public class Main_2703142 {
                 break;
             case 5:
                 if (hotel.allRooms().isEmpty()) System.out.println("No rooms yet. Use Add Room Record to start.");
-                for (Room_2703142 listedRoom : hotel.allRooms()) showRoom(listedRoom, hotel.statusToday(listedRoom));
+                for (Room listedRoom : hotel.allRooms()) showRoom(listedRoom, hotel.statusToday(listedRoom));
                 break;
             default: System.out.println("Choose a listed option.");
         }
     }
 
-    private void showRoom(Room_2703142 room, Room_2703142.Status status) {
+    private void showRoom(Room room, Room.Status status) {
         box("Room " + room.id + "   " + room.type(),
                 room.bed + " bed   |   " + String.format("LKR %,d/night", room.dailyRate()),
                 "Guests included: " + room.capacity + "   |   Breakfast: " + (room.includesBreakfast() ? "yes" : "no"),
-                "Status: " + (status == Room_2703142.Status.UnderMaintenance ? "Under Maintenance" : status));
+                "Status: " + (status == Room.Status.UnderMaintenance ? "Under Maintenance" : status));
     }
 
-    private List<Room_2703142> available(String type, LocalDate start, LocalDate end) {
-        List<Room_2703142> rooms = hotel.searchRooms(type, start, end);
-        for (Room_2703142 room : rooms) showRoom(room, Room_2703142.Status.Available);
+    private List<Room> available(String type, LocalDate start, LocalDate end) {
+        List<Room> rooms = hotel.searchRooms(type, start, end);
+        for (Room room : rooms) showRoom(room, Room.Status.Available);
         if (rooms.isEmpty()) System.out.println("No matching rooms for this stay.");
         return rooms;
     }
@@ -201,7 +201,7 @@ public class Main_2703142 {
         String type = chooseRoomPackage();
         LocalDate start = date("Check-in");
         LocalDate end = date("Check-out");
-        List<Room_2703142> rooms = available(type, start, end);
+        List<Room> rooms = available(type, start, end);
         if (rooms.isEmpty()) return;
         if (!book) {
             box("Room search", "[01] Make Reservation from These Results", "[00] Back to Guest menu");
@@ -214,12 +214,12 @@ public class Main_2703142 {
             document = ask("Registered NIC/passport");
             hotel.guest(document);
         }
-        Room_2703142 selectedRoom = hotel.room(ask("Room ID from results"));
+        Room selectedRoom = hotel.room(ask("Room ID from results"));
         if (!rooms.contains(selectedRoom)) throw new IllegalArgumentException("Choose a room from the results.");
         LocalTime arrivalTime = checkInTime();
         int count = number("Number of guests");
         if (confirm("Confirm booking with LKR 10,000 refundable advance?")) {
-            Reservation_2703142 booking = hotel.reserve(document, selectedRoom.id, start, end, count, arrivalTime);
+            Reservation booking = hotel.reserve(document, selectedRoom.id, start, end, count, arrivalTime);
             saved("Booked " + booking.id + ". Advance recorded: LKR 10,000.");
         }
     }
@@ -227,7 +227,7 @@ public class Main_2703142 {
     private void guest(int choice) throws IOException {
         switch (choice) {
             case 1:
-                hotel.register(new Guest_2703142(ask("NIC/passport"), ask("Full name"),
+                hotel.register(new Guest(ask("NIC/passport"), ask("Full name"),
                         ask("Contact number"), ask("Email")));
                 saved("Guest registered.");
                 break;
@@ -240,7 +240,7 @@ public class Main_2703142 {
                 showList(hotel.byDate(showAllDates ? null : date("Check-in")));
                 break;
             case 7:
-                Reservation_2703142 existingBooking = hotel.booking(ask("Booking ID"));
+                Reservation existingBooking = hotel.booking(ask("Booking ID"));
                 show(existingBooking);
                 String roomId = ask("Room ID for updated stay");
                 LocalDate arrival = date("Check-in");
@@ -262,26 +262,26 @@ public class Main_2703142 {
         }
     }
 
-    private void show(Reservation_2703142 booking) {
+    private void show(Reservation booking) {
         System.out.printf("%s | %s | Room %s | %s to %s | Guests: %d | %s%n",
                 booking.id, booking.guest.name, booking.room.id, booking.arrival + " " + booking.checkInTime, booking.departure, booking.guests,
                 booking.cancelled() ? "Cancelled / advance refunded" : "Confirmed");
     }
 
-    private void showList(List<Reservation_2703142> list) {
+    private void showList(List<Reservation> list) {
         if (list.isEmpty()) System.out.println("No matching reservations.");
-        for (Reservation_2703142 booking : list) show(booking);
+        for (Reservation booking : list) show(booking);
     }
 
-    private void invoice(Reservation_2703142 booking) {
-        Invoice_2703142 bill = new Invoice_2703142(booking, new LongStayDiscount_2703142());
+    private void invoice(Reservation booking) {
+        Invoice bill = new Invoice(booking, new LongStayDiscount());
         box("SmartStay invoice " + booking.id + " (LKR)");
         System.out.println(booking.guest.name + " | " + booking.guest.document + " | " + booking.guest.phone + " | " + booking.guest.email);
         System.out.printf("Room %s | %s | %s bed | Daily rate %,d%n", booking.room.id, booking.room.type(), booking.room.bed, booking.room.dailyRate());
         System.out.printf("Check-in %s | Check-out %s | Nights %d | Guests %d%n", booking.arrival + " " + booking.checkInTime, booking.departure, bill.nights, booking.guests);
         System.out.printf("Base charge: %,.2f%nExtra guest charges: %,.2f%nDiscount: %,.2f%n", bill.base, bill.extra, bill.discount);
         System.out.printf("Tax (%d%%): %,.2f%nTotal: %,.2f%nAdvance deducted: %,d.00%n",
-                booking.room.taxPercent(), bill.tax, bill.total, Reservation_2703142.ADVANCE);
+                booking.room.taxPercent(), bill.tax, bill.total, Reservation.ADVANCE);
         System.out.printf("Final payable: %,.2f%n", bill.balance.max(java.math.BigDecimal.ZERO));
         if (bill.balance.signum() < 0) System.out.printf("Refund due: %,.2f%n", bill.balance.negate());
     }

@@ -3,22 +3,22 @@ package smartstay.model;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-public class Reservation_2703142 {
+public class Reservation {
     public static final int ADVANCE = 10000;
     public final String id;
-    public final Guest_2703142 guest;
-    public final Room_2703142 room;
+    public final Guest guest;
+    public final Room room;
     public final LocalDate arrival, departure;
     public final int guests;
     public final LocalTime checkInTime;
     private boolean cancelled;
 
-    public Reservation_2703142(String id, Guest_2703142 guest, Room_2703142 room,
+    public Reservation(String id, Guest guest, Room room,
                                LocalDate arrival, LocalDate departure, int guests) {
         this(id, guest, room, arrival, departure, guests, LocalTime.of(14, 0));
     }
 
-    public Reservation_2703142(String id, Guest_2703142 guest, Room_2703142 room,
+    public Reservation(String id, Guest guest, Room room,
                                LocalDate arrival, LocalDate departure, int guests, LocalTime checkInTime) {
         this.checkInTime = java.util.Objects.requireNonNull(checkInTime, "Check-in time is required.");
         this.id = id;

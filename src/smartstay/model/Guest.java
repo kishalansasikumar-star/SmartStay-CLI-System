@@ -1,9 +1,9 @@
 package smartstay.model;
 
-public class Guest_2703142 {
+public class Guest {
     public final String document, name, phone, email;
 
-    public Guest_2703142(String document, String name, String phone, String email) {
+    public Guest(String document, String name, String phone, String email) {
         this.document = document;
         this.name = name;
         this.phone = phone;

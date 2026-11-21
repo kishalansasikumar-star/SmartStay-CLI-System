@@ -1,6 +1,6 @@
 package smartstay.model;
 
-public enum RoomPackage_2703142 {
+public enum RoomPackage {
     STANDARD("Standard", 6000, false, 1000, 10),
     DELUXE("Deluxe", 9000, true, 1500, 12),
     SUITE("Suite", 14000, true, 2000, 15),
@@ -10,7 +10,7 @@ public enum RoomPackage_2703142 {
     public final int dailyRate, extraGuestRate, taxPercent;
     public final boolean breakfast;
 
-    RoomPackage_2703142(String label, int dailyRate, boolean breakfast, int extraGuestRate, int taxPercent) {
+    RoomPackage(String label, int dailyRate, boolean breakfast, int extraGuestRate, int taxPercent) {
         this.label = label;
         this.dailyRate = dailyRate;
         this.breakfast = breakfast;

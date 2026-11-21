@@ -1,6 +1,6 @@
 # SmartStay Hotel Booking System
 
-Java CLI coursework project for E245549. Use one running instance at a time. Requires a JDK (11 or newer). The program uses Java SE and saves records locally after each successful change.
+Java CLI coursework project for 2703142. Use one running instance at a time. Requires a JDK (11 or newer). The program uses Java SE and saves records locally after each successful change.
 
 ## Run on Windows
 
@@ -10,7 +10,7 @@ Open PowerShell in the extracted SmartStay folder. On the development machine ru
 .\run.ps1 -Jdk 'C:\Program Files\Java\jdk-25'
 ```
 
-On another machine, use its JDK folder or run `.\run.ps1` with JAVA_HOME or the JDK on PATH. If local PowerShell policy blocks the script, use the IDE route: open the project, mark src as the source root, set the working directory to the project folder and launch smartstay.ui.E245549_Main.
+On another machine, use its JDK folder or run `.\run.ps1` with JAVA_HOME or the JDK on PATH. If local PowerShell policy blocks the script, use the IDE route: open the project, mark src as the source root, set the working directory to the project folder and launch smartstay.ui.Main_2703142.
 
 ## First booking
 
@@ -34,7 +34,7 @@ On another machine, use its JDK folder or run `.\run.ps1` with JAVA_HOME or the 
 
 ## Design and implementation
 
-The model package contains Guest, Room, Reservation and Invoice. All project class names use the E245549 prefix. Each reservation references exactly one guest and one room. A guest or room can have many reservations across time. Private status fields and booking operations control state changes. The four room subclasses inherit common room data and override package methods. Billing calls those methods through the Room type and uses the DiscountPolicy interface for the long-stay rule.
+The model package contains Guest, Room, Reservation and Invoice. Java class names end with the student ID, for example Hotel_2703142. Each reservation references exactly one guest and one room. A guest or room can have many reservations across time. Private status fields and booking operations control state changes. The four room subclasses inherit common room data and override package methods. Billing calls those methods through the Room type and uses the DiscountPolicy interface for the long-stay rule.
 
 The core package holds booking rules and local file storage. LinkedHashMap gives direct ID lookups and predictable listing order. Available-room search checks type and looks for overlapping intervals. Guest-name search scans bookings and returns every match. Check-in viewing gathers matches in an ArrayList and sorts by arrival. The ui package reads menu choices, displays validation feedback and prints invoices.
 

@@ -4,13 +4,13 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.temporal.ChronoUnit;
 
-public class E245549_Invoice {
+public class Invoice_2703142 {
     public final long nights;
     public final BigDecimal base, extra, discount, tax, total, balance;
 
-    public E245549_Invoice(E245549_Reservation booking, E245549_DiscountPolicy policy) {
+    public Invoice_2703142(Reservation_2703142 booking, DiscountPolicy_2703142 policy) {
         if (booking.cancelled()) throw new IllegalArgumentException("Booking cancelled. Advance already refunded.");
-        E245549_Room room = booking.room;
+        Room_2703142 room = booking.room;
         nights = ChronoUnit.DAYS.between(booking.arrival, booking.departure);
         base = BigDecimal.valueOf(room.dailyRate()).multiply(BigDecimal.valueOf(nights));
         int extraGuests = Math.max(0, booking.guests - room.capacity);
@@ -20,6 +20,6 @@ public class E245549_Invoice {
         BigDecimal subtotal = base.subtract(discount).add(extra);
         tax = subtotal.multiply(BigDecimal.valueOf(room.taxPercent(), 2)).setScale(2, RoundingMode.HALF_UP);
         total = subtotal.add(tax);
-        balance = total.subtract(BigDecimal.valueOf(E245549_Reservation.ADVANCE));
+        balance = total.subtract(BigDecimal.valueOf(Reservation_2703142.ADVANCE));
     }
 }

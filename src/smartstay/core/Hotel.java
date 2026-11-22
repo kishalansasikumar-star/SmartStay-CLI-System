@@ -19,7 +19,6 @@ public class Hotel {
         guest.validateForRegistration();
         addGuestRecord(guest);
     }
-
     void addGuestRecord(Guest guest) {
         if (guests.putIfAbsent(key(guest.document), guest) != null)
             throw new IllegalArgumentException("NIC/passport already registered.");

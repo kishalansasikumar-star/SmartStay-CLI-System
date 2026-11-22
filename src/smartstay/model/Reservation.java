@@ -33,7 +33,6 @@ public class Reservation {
     public void cancel() { cancelled = true; }
 
     public boolean overlaps(LocalDate start, LocalDate end) {
-        // Checkout day is free for the next guest.
         return !cancelled && start.isBefore(departure) && arrival.isBefore(end);
     }
 }

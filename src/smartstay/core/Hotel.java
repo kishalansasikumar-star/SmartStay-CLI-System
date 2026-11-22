@@ -30,6 +30,10 @@ public class Hotel {
         return guest;
     }
 
+    public void checkNewRoomId(String id) {
+        if (rooms.containsKey(key(id))) throw new IllegalArgumentException("Room ID already exists.");
+    }
+
     public void addRoom(Room room) {
         if (rooms.putIfAbsent(room.id, room) != null) throw new IllegalArgumentException("Room ID already exists.");
     }

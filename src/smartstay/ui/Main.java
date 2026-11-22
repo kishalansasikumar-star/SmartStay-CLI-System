@@ -151,13 +151,14 @@ public class Main {
             case 1:
             case 2:
                 String id = ask("Room ID");
-                if (choice == 2) hotel.room(id);
+                if (choice == 1) hotel.checkNewRoomId(id);
+                else hotel.room(id);
                 String type = chooseRoomPackage();
                 Room.Bed bed = Room.Bed.valueOf(choose("Bed Type", "Single", "Double", "Queen", "King"));
                 Room room = Room.create(type, id, bed, number("How many guests does the nightly rate cover?"), pickStatus());
                 if (choice == 1) hotel.addRoom(room);
                 else hotel.updateRoom(room);
-                saved("Room saved.");
+                saved("Room saved successfully.");
                 break;
             case 3:
                 String removeId = ask("Room ID");

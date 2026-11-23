@@ -151,6 +151,7 @@ public class Main {
             case 1:
             case 2:
                 String id = ask("Room ID");
+                // Check for a duplicate before asking for the room details.
                 if (choice == 1) hotel.checkNewRoomId(id);
                 else hotel.room(id);
                 String type = chooseRoomPackage();
@@ -158,13 +159,13 @@ public class Main {
                 Room room = Room.create(type, id, bed, number("How many guests does the nightly rate cover?"), pickStatus());
                 if (choice == 1) hotel.addRoom(room);
                 else hotel.updateRoom(room);
-                saved("Room saved successfully.");
+                saved("Room " + room.id + (choice == 1 ? " saved successfully." : " updated successfully."));
                 break;
             case 3:
                 String removeId = ask("Room ID");
                 if (confirm("Remove room " + removeId + "?")) {
                     hotel.removeRoom(removeId);
-                    saved("Room removed.");
+                    saved("Room " + removeId.toUpperCase(java.util.Locale.ROOT) + " removed successfully.");
                 }
                 break;
             case 4:

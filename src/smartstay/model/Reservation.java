@@ -33,6 +33,7 @@ public class Reservation {
     public void cancel() { cancelled = true; }
 
     public boolean overlaps(LocalDate start, LocalDate end) {
+        // A new stay can start on the previous guest's check-out date.
         return !cancelled && start.isBefore(departure) && arrival.isBefore(end);
     }
 }

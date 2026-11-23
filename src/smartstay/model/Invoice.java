@@ -13,10 +13,12 @@ public class Invoice {
         Room room = booking.room;
         nights = ChronoUnit.DAYS.between(booking.arrival, booking.departure);
         base = BigDecimal.valueOf(room.dailyRate()).multiply(BigDecimal.valueOf(nights));
+        // The room rate already covers guests up to the included count.
         int extraGuests = Math.max(0, booking.guests - room.capacity);
         extra = BigDecimal.valueOf(extraGuests).multiply(BigDecimal.valueOf(room.extraGuestRate()))
                 .multiply(BigDecimal.valueOf(nights));
         discount = policy.discount(nights, base);
+        // Apply tax to the discounted room charge and the full extra guest fees.
         BigDecimal subtotal = base.subtract(discount).add(extra);
         tax = subtotal.multiply(BigDecimal.valueOf(room.taxPercent(), 2)).setScale(2, RoundingMode.HALF_UP);
         total = subtotal.add(tax);

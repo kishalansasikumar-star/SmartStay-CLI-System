@@ -48,6 +48,7 @@ public class Storage {
                 out.writeUTF(booking.checkInTime.toString());
             }
         }
+        // Replace the saved file only after the new records have been written.
         Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
     }
 
@@ -72,6 +73,7 @@ public class Storage {
                 LocalDate departure = LocalDate.parse(in.readUTF());
                 int count = in.readInt();
                 boolean cancelled = in.readBoolean();
+                // Older files do not store a check-in time, so use 14:00.
                 LocalTime time = FORMAT.equals(format) ? LocalTime.parse(in.readUTF()) : LocalTime.of(14, 0);
                 Reservation booking = new Reservation(id, guest, room, arrival, departure, count, time);
                 if (cancelled) booking.cancel();

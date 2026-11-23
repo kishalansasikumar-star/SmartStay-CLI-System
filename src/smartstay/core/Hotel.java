@@ -70,6 +70,7 @@ public class Hotel {
     }
 
     public void checkBookingNotice(LocalDate start) {
+        // Count calendar days in Sri Lanka for the booking notice.
         if (start.isBefore(LocalDate.now(clock).plusDays(2)))
             throw new IllegalArgumentException("Book at least two calendar days before check-in.");
     }
@@ -79,8 +80,10 @@ public class Hotel {
     }
 
     public Room.Status statusFor(Room room, LocalDate start, LocalDate end, String ignoreId) {
+        // A manual status can block bookings even when there are no overlapping stays.
         if (room.status() != Room.Status.Available) return room.status();
         for (Reservation booking : bookings.values()) {
+            // Skip the existing booking when checking its revised stay.
             if (!booking.id.equals(ignoreId) && booking.room.id.equals(room.id) && booking.overlaps(start, end))
                 return Room.Status.Reserved;
         }
@@ -130,6 +133,7 @@ public class Hotel {
         checkDates(start, end);
         Reservation original = bookings.get(id);
         boolean newArrival = original == null || !start.equals(original.arrival);
+        // Apply the notice rule to new bookings and changes to the arrival date.
         if (newArrival) checkBookingNotice(start);
         if (count <= 0) throw new IllegalArgumentException("Guest count must be positive.");
         Room room = room(roomId);
@@ -153,6 +157,7 @@ public class Hotel {
         Reservation booking = booking(id);
         if (booking.cancelled()) throw new IllegalArgumentException("Booking already cancelled.");
         Instant cutoff = booking.arrival.atTime(booking.checkInTime).atZone(ZONE).minusHours(24).toInstant();
+        // Changes are still allowed exactly 24 hours before check-in.
         if (clock.instant().isAfter(cutoff)) throw new IllegalArgumentException("24-hour change deadline has passed.");
         return booking;
     }

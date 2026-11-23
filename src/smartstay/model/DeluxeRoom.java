@@ -9,3 +9,4 @@ public class DeluxeRoom extends Room {
         return RoomPackage.DELUXE;
     }
 }
+

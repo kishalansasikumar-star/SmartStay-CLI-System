@@ -149,7 +149,12 @@ public class Hotel {
     }
 
     public Reservation reserve(String document, String roomId, LocalDate start, LocalDate end, int count, LocalTime checkInTime) {
-        String id = String.format(Locale.ROOT, "B%04d", bookings.size() + 1);
+        int nextNumber = bookings.size() + 1;
+        String id = String.format(Locale.ROOT, "B%04d", nextNumber);
+        // Skip IDs already present in the saved booking records.
+        while (bookings.containsKey(id)) {
+            id = String.format(Locale.ROOT, "B%04d", ++nextNumber);
+        }
         return saveBooking(id, guest(document), roomId, start, end, count, checkInTime);
     }
 

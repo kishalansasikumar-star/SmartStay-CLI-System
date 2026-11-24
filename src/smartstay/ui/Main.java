@@ -277,14 +277,35 @@ public class Main {
 
     private void invoice(Reservation booking) {
         Invoice bill = new Invoice(booking, new LongStayDiscount());
-        box("SmartStay invoice " + booking.id + " (LKR)");
-        System.out.println(booking.guest.name + " | " + booking.guest.document + " | " + booking.guest.phone + " | " + booking.guest.email);
-        System.out.printf("Room %s | %s | %s bed | Daily rate %,d%n", booking.room.id, booking.room.type(), booking.room.bed, booking.room.dailyRate());
-        System.out.printf("Check-in %s | Check-out %s | Nights %d | Guests %d%n", booking.arrival + " " + booking.checkInTime, booking.departure, bill.nights, booking.guests);
-        System.out.printf("Base charge: %,.2f%nExtra guest charges: %,.2f%nDiscount: %,.2f%n", bill.base, bill.extra, bill.discount);
-        System.out.printf("Tax (%d%%): %,.2f%nTotal: %,.2f%nAdvance deducted: %,d.00%n",
-                booking.room.taxPercent(), bill.tax, bill.total, Reservation.ADVANCE);
-        System.out.printf("Final payable: %,.2f%n", bill.balance.max(java.math.BigDecimal.ZERO));
-        if (bill.balance.signum() < 0) System.out.printf("Refund due: %,.2f%n", bill.balance.negate());
+        List<String> rows = new ArrayList<>(List.of(
+                "Guest Details",
+                "─────────────",
+                "Name: " + booking.guest.name,
+                "NIC/passport: " + booking.guest.document,
+                "Contact number: " + booking.guest.phone,
+                "Email: " + booking.guest.email,
+                "",
+                "Stay Details",
+                "────────────",
+                "Room: " + booking.room.id + " | " + booking.room.type() + " | " + booking.room.bed + " bed",
+                "Check-in: " + booking.arrival + " " + booking.checkInTime,
+                "Check-out: " + booking.departure,
+                "Nights: " + bill.nights + " | Guests: " + booking.guests,
+                "",
+                "Billing (LKR)",
+                "─────────────",
+                String.format(Locale.US, "%-20s - %,12.2f", "Nightly rate", (double) booking.room.dailyRate()),
+                String.format(Locale.US, "%-20s - %,12.2f", "Base charge", bill.base),
+                String.format(Locale.US, "%-20s - %,12.2f", "Extra guest charges", bill.extra),
+                String.format(Locale.US, "%-20s - %,12.2f", "Discount", bill.discount),
+                String.format(Locale.US, "%-20s - %,12.2f", "Tax (" + booking.room.taxPercent() + "%)", bill.tax),
+                String.format(Locale.US, "%-20s - %,12.2f", "Total", bill.total),
+                String.format(Locale.US, "%-20s - %,12.2f", "Advance deducted", (double) Reservation.ADVANCE),
+                "",
+                String.format(Locale.US, "%-20s - %,12.2f", "FINAL PAYABLE", bill.balance.max(java.math.BigDecimal.ZERO))));
+        if (bill.balance.signum() < 0) {
+            rows.add(String.format(Locale.US, "%-20s - %,12.2f", "Refund due", bill.balance.negate()));
+        }
+        box("SmartStay Invoice | Booking " + booking.id, rows.toArray(new String[0]));
     }
 }

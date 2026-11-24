@@ -1,0 +1,9 @@
+{
+  "terminal.integrated.profiles.windows": {
+    "Command Prompt UTF-8": {
+      "path": "${env:windir}\\System32\\cmd.exe",
+      "args": ["/k", "chcp 65001 > nul"]
+    }
+  },
+  "terminal.integrated.defaultProfile.windows": "Command Prompt UTF-8"
+}
